@@ -3,7 +3,6 @@ import {
   Container,
   Typography,
   Box,
-  Grid,
   FormControl,
   InputLabel,
   Select,
@@ -25,7 +24,6 @@ const Events = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Fetch events on component mount
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -43,7 +41,6 @@ const Events = () => {
     fetchEvents();
   }, []);
 
-  // Update filteredEvents whenever filters or searchTerm change
   useEffect(() => {
     const lowerSearch = searchTerm.toLowerCase();
     const filtered = events.filter((event) => {
@@ -99,69 +96,68 @@ const Events = () => {
           <Typography variant="h6">Search & Filter Events</Typography>
         </Box>
 
-        <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              label="Search events"
-              variant="outlined"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <Search sx={{ mr: 1, color: "text.secondary" }} />
-                ),
-              }}
-            />
-          </Grid>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 2,
+            flexWrap: "wrap",
+          }}
+        >
+          <TextField
+            fullWidth
+            label="Search events"
+            variant="outlined"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <Search sx={{ mr: 1, color: "text.secondary" }} />
+              ),
+            }}
+          />
 
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>Category</InputLabel>
-              <Select
-                value={categoryFilter}
-                label="Category"
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                <MenuItem value="">All Categories</MenuItem>
-                {categories.map((category) => (
-                  <MenuItem key={category} value={category}>
-                    {category}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
+          <FormControl fullWidth>
+            <InputLabel>Category</InputLabel>
+            <Select
+              value={categoryFilter}
+              label="Category"
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
+              <MenuItem value="">All Categories</MenuItem>
+              {categories.map((category) => (
+                <MenuItem key={category} value={category}>
+                  {category}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={statusFilter}
-                label="Status"
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <MenuItem value="">All Events</MenuItem>
-                <MenuItem value="upcoming">Upcoming</MenuItem>
-                <MenuItem value="past">Past</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
+          <FormControl fullWidth>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={statusFilter}
+              label="Status"
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <MenuItem value="">All Events</MenuItem>
+              <MenuItem value="upcoming">Upcoming</MenuItem>
+              <MenuItem value="past">Past</MenuItem>
+            </Select>
+          </FormControl>
 
-          <Grid item xs={12} md={2}>
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              {(searchTerm || categoryFilter || statusFilter) && (
-                <Chip
-                  label="Clear Filters"
-                  onClick={handleClearFilters}
-                  onDelete={handleClearFilters}
-                  color="primary"
-                  variant="outlined"
-                />
-              )}
+          {(searchTerm || categoryFilter || statusFilter) && (
+            <Box>
+              <Chip
+                label="Clear Filters"
+                onClick={handleClearFilters}
+                onDelete={handleClearFilters}
+                color="primary"
+                variant="outlined"
+              />
             </Box>
-          </Grid>
-        </Grid>
+          )}
+        </Box>
       </Paper>
 
       {/* Results Summary */}
@@ -173,13 +169,21 @@ const Events = () => {
 
       {/* Events Grid */}
       {filteredEvents.length > 0 ? (
-        <Grid container spacing={3}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, 1fr)",
+              lg: "repeat(3, 1fr)",
+            },
+            gap: 3,
+          }}
+        >
           {filteredEvents.map((event) => (
-            <Grid item xs={12} md={6} lg={4} key={event.id}>
-              <EventCard event={event} />
-            </Grid>
+            <EventCard event={event} key={event.id} />
           ))}
-        </Grid>
+        </Box>
       ) : (
         <Paper sx={{ p: 6, textAlign: "center" }}>
           <Typography variant="h5" gutterBottom>
