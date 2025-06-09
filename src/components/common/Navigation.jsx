@@ -76,11 +76,11 @@ const Navigation = () => {
         );
       }
 
-      if (user.role === 'admin') {
-        items.push(
-          { text: 'Admin Panel', icon: <AdminPanelSettings />, path: '/admin', roles: ['admin'] }
-        );
-      }
+      // if (user.role === 'admin') {
+      //   items.push(
+      //     { text: 'Admin Panel', icon: <AdminPanelSettings />, path: '/admin', roles: ['admin'] }
+      //   );
+      // }
     }
 
     return items.filter(item => 
@@ -239,4 +239,3 @@ const Navigation = () => {
 };
 
 export default Navigation;
-
