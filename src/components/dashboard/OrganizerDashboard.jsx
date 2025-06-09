@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -20,9 +20,8 @@ import {
   ListItemText,
   ListItemIcon,
   Divider,
+  CircularProgress, // Added for loading state
   IconButton,
-  Menu,
-  MenuItem
 } from '@mui/material';
 import {
   Event,
@@ -31,22 +30,44 @@ import {
   Delete,
   People,
   TrendingUp,
-  Visibility,
-  MoreVert,
+  Visibility, // Kept for View Details button icon
   LocationOn,
   Schedule,
   AttachMoney
 } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
-import { getOrganizerEvents, getEventParticipants } from '../../utils/mockData';
+import apiService from '../../utils/apiService'; // Import apiService
 
 const OrganizerDashboard = () => {
   const { user } = useAuth();
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [organizerEvents, setOrganizerEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [error, setError] = useState('');
 
-  const organizerEvents = getOrganizerEvents(user.id);
+  useEffect(() => {
+    const fetchEvents = async () => {
+      if (!user?.id) {
+        setLoadingEvents(false);
+        return;
+      }
+      try {
+        setLoadingEvents(true);
+        setError('');
+        // Assuming apiService.getOrganizerEvents(userId) exists or similar
+        // If you have a general getEvents and filter by organizerId, adjust accordingly
+        const events = await apiService.getUserEvents(user.id); 
+        setOrganizerEvents(events);
+      } catch (err) {
+        setError(err.message || 'Failed to load your events. Please try again.');
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
+    fetchEvents();
+  }, [user?.id]);
+
   const upcomingEvents = organizerEvents.filter(e => e.status === 'upcoming');
   const pastEvents = organizerEvents.filter(e => e.status === 'past');
 
@@ -56,25 +77,25 @@ const OrganizerDashboard = () => {
     { icon: <People />, label: 'Total Participants', value: organizerEvents.reduce((sum, e) => sum + e.currentParticipants, 0) }
   ];
 
-  const handleMenuOpen = (event, eventData) => {
-    setAnchorEl(event.currentTarget);
+  const handleDeleteEvent = (eventData) => {
     setSelectedEvent(eventData);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedEvent(null);
-  };
-
-  const handleDeleteEvent = () => {
     setDeleteDialog(true);
-    handleMenuClose();
   };
 
-  const confirmDelete = () => {
-    // In a real app, this would make an API call
-    setDeleteDialog(false);
-    setSelectedEvent(null);
+  const confirmDelete = async () => {
+    if (!selectedEvent) return;
+    try {
+      await apiService.deleteEvent(selectedEvent.id);
+      setOrganizerEvents(prevEvents => prevEvents.filter(event => event.id !== selectedEvent.id));
+      setDeleteDialog(false);
+      setSelectedEvent(null);
+      // Optionally, show a success message (e.g., using a Snackbar)
+    } catch (err) {
+      console.error("Failed to delete event:", err);
+      // Display error to user, perhaps in the dialog or an Alert
+      setError(err.message || 'Failed to delete event. Please try again.');
+      // Keep dialog open or handle error display appropriately
+    }
   };
 
   const formatDate = (dateString) => {
@@ -107,6 +128,11 @@ const OrganizerDashboard = () => {
         <Typography variant="h6" color="text.secondary">
           Manage your events and track participant engagement
         </Typography>
+        {error && !loadingEvents && ( // Show general error if not loading
+          <Alert severity="error" sx={{ mt: 2 }} onClose={() => setError('')}>
+            {error}
+          </Alert>
+        )}
       </Box>
 
       {/* Stats Cards */}
@@ -174,7 +200,15 @@ const OrganizerDashboard = () => {
               My Events
             </Typography>
             
-            {organizerEvents.length > 0 ? (
+            {loadingEvents ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 3 }}>
+                <CircularProgress />
+                <Typography sx={{ ml: 2 }}>Loading your events...</Typography>
+              </Box>
+            ) : error && organizerEvents.length === 0 ? ( // Show error specific to event loading if no events
+              <Alert severity="warning">Could not load your events. {error.includes("Failed to load") ? error : "Please try refreshing."}</Alert>
+            )
+            : organizerEvents.length > 0 ? (
               <Grid container spacing={2}>
                 {organizerEvents.map((event) => (
                   <Grid item xs={12} key={event.id}>
@@ -238,13 +272,6 @@ const OrganizerDashboard = () => {
                               </Grid>
                             </Grid>
                           </Box>
-                          
-                          <IconButton
-                            onClick={(e) => handleMenuOpen(e, event)}
-                            size="small"
-                          >
-                            <MoreVert />
-                          </IconButton>
                         </Box>
                       </CardContent>
                       
@@ -252,11 +279,13 @@ const OrganizerDashboard = () => {
                         <Button size="small" startIcon={<Visibility />} href={`/events/${event.id}`}>
                           View Details
                         </Button>
-                        <Button size="small" startIcon={<Edit />} href={`/edit-event/${event.id}`}>
-                          Edit Event
-                        </Button>
-                        <Button size="small" startIcon={<People />}>
-                          Manage Participants ({event.currentParticipants})
+                        <Button 
+                          size="small" 
+                          startIcon={<Delete />} 
+                          color="error"
+                          onClick={() => handleDeleteEvent(event)}
+                        >
+                          Delete Event
                         </Button>
                       </CardActions>
                     </Card>
@@ -273,44 +302,6 @@ const OrganizerDashboard = () => {
 
         {/* Right Column - Event Statistics */}
         <Grid item xs={12} md={4}>
-          {/* Recent Activity */}
-          <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" gutterBottom fontWeight="bold">
-              Recent Activity
-            </Typography>
-            <List dense>
-              <ListItem>
-                <ListItemIcon>
-                  <Event color="primary" />
-                </ListItemIcon>
-                <ListItemText
-                  primary="New registration"
-                  secondary="Tech Conference 2024 - 2 hours ago"
-                />
-              </ListItem>
-              <Divider />
-              <ListItem>
-                <ListItemIcon>
-                  <People color="success" />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Event capacity reached"
-                  secondary="Digital Marketing Workshop - 1 day ago"
-                />
-              </ListItem>
-              <Divider />
-              <ListItem>
-                <ListItemIcon>
-                  <Add color="info" />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Event created"
-                  secondary="Startup Pitch Competition - 3 days ago"
-                />
-              </ListItem>
-            </List>
-          </Paper>
-
           {/* Performance Summary */}
           <Paper elevation={2} sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom fontWeight="bold">
@@ -347,23 +338,6 @@ const OrganizerDashboard = () => {
           </Paper>
         </Grid>
       </Grid>
-
-      {/* Event Actions Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-      >
-        <MenuItem onClick={() => window.location.href = `/events/${selectedEvent?.id}`}>
-          <Visibility sx={{ mr: 1 }} /> View Details
-        </MenuItem>
-        <MenuItem onClick={() => window.location.href = `/edit-event/${selectedEvent?.id}`}>
-          <Edit sx={{ mr: 1 }} /> Edit Event
-        </MenuItem>
-        <MenuItem onClick={handleDeleteEvent}>
-          <Delete sx={{ mr: 1 }} /> Delete Event
-        </MenuItem>
-      </Menu>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
