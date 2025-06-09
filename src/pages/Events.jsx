@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Typography,
@@ -10,37 +10,76 @@ import {
   MenuItem,
   TextField,
   Chip,
-  Paper
-} from '@mui/material';
-import { Search, FilterList } from '@mui/icons-material';
-import EventCard from '../components/events/EventCard';
-import { mockEvents } from '../utils/mockData';
+  Paper,
+  CircularProgress,
+} from "@mui/material";
+import { Search, FilterList } from "@mui/icons-material";
+import EventCard from "../components/events/EventCard";
+import apiService from "../utils/apiService";
 
 const Events = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [events, setEvents] = useState([]);
+  const [filteredEvents, setFilteredEvents] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // Get unique categories
-  const categories = [...new Set(mockEvents.map(event => event.category))];
+  // Fetch events on component mount
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const response = await apiService.getEvents();
+        setEvents(response);
+        setFilteredEvents(response);
+      } catch (error) {
+        console.error("Failed to fetch events:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Filter events based on search and filters
-  const filteredEvents = mockEvents.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.location.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = !categoryFilter || event.category === categoryFilter;
-    const matchesStatus = !statusFilter || event.status === statusFilter;
+    fetchEvents();
+  }, []);
 
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+  // Update filteredEvents whenever filters or searchTerm change
+  useEffect(() => {
+    const lowerSearch = searchTerm.toLowerCase();
+    const filtered = events.filter((event) => {
+      const matchesSearch =
+        event.title.toLowerCase().includes(lowerSearch) ||
+        event.description.toLowerCase().includes(lowerSearch) ||
+        event.location.toLowerCase().includes(lowerSearch);
+
+      const matchesCategory =
+        !categoryFilter || event.category === categoryFilter;
+      const matchesStatus = !statusFilter || event.status === statusFilter;
+
+      return matchesSearch && matchesCategory && matchesStatus;
+    });
+
+    setFilteredEvents(filtered);
+  }, [searchTerm, categoryFilter, statusFilter, events]);
 
   const handleClearFilters = () => {
-    setSearchTerm('');
-    setCategoryFilter('');
-    setStatusFilter('');
+    setSearchTerm("");
+    setCategoryFilter("");
+    setStatusFilter("");
   };
+
+  const categories = [...new Set(events.map((event) => event.category))];
+
+  if (loading) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4, textAlign: "center" }}>
+        <CircularProgress />
+        <Typography variant="h6" mt={2}>
+          Loading events...
+        </Typography>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -55,11 +94,11 @@ const Events = () => {
 
       {/* Search and Filters */}
       <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
           <FilterList sx={{ mr: 1 }} />
           <Typography variant="h6">Search & Filter Events</Typography>
         </Box>
-        
+
         <Grid container spacing={3} alignItems="center">
           <Grid item xs={12} md={4}>
             <TextField
@@ -69,11 +108,13 @@ const Events = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{
-                startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />
+                startAdornment: (
+                  <Search sx={{ mr: 1, color: "text.secondary" }} />
+                ),
               }}
             />
           </Grid>
-          
+
           <Grid item xs={12} md={3}>
             <FormControl fullWidth>
               <InputLabel>Category</InputLabel>
@@ -91,7 +132,7 @@ const Events = () => {
               </Select>
             </FormControl>
           </Grid>
-          
+
           <Grid item xs={12} md={3}>
             <FormControl fullWidth>
               <InputLabel>Status</InputLabel>
@@ -106,9 +147,9 @@ const Events = () => {
               </Select>
             </FormControl>
           </Grid>
-          
+
           <Grid item xs={12} md={2}>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
               {(searchTerm || categoryFilter || statusFilter) && (
                 <Chip
                   label="Clear Filters"
@@ -126,7 +167,7 @@ const Events = () => {
       {/* Results Summary */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="body1" color="text.secondary">
-          Showing {filteredEvents.length} of {mockEvents.length} events
+          Showing {filteredEvents.length} of {events.length} events
         </Typography>
       </Box>
 
@@ -140,7 +181,7 @@ const Events = () => {
           ))}
         </Grid>
       ) : (
-        <Paper sx={{ p: 6, textAlign: 'center' }}>
+        <Paper sx={{ p: 6, textAlign: "center" }}>
           <Typography variant="h5" gutterBottom>
             No events found
           </Typography>
@@ -160,4 +201,3 @@ const Events = () => {
 };
 
 export default Events;
-
