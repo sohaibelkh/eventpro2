@@ -32,6 +32,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { useAuth } from '../hooks/useAuth';
+import apiService from '../utils/apiService'; // Import your apiService
 
 const CreateEvent = () => {
   const navigate = useNavigate();
@@ -50,6 +51,7 @@ const CreateEvent = () => {
   const [tagInput, setTagInput] = useState('');
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
 
   const categories = [
     'Technology',
@@ -148,30 +150,40 @@ const CreateEvent = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    setErrors({}); // Clear previous errors
+    setSuccess(false);
+
     if (!validateForm()) {
       return;
     }
 
-    // In a real app, this would make an API call
-    console.log('Creating event:', {
+    setLoadingSubmit(true);
+    const eventPayload = {
       ...formData,
       organizer: user.name,
       organizerId: user.id,
-      date: formData.date.format('YYYY-MM-DD'),
-      time: formData.time.format('HH:mm'),
+      date: formData.date ? formData.date.format('YYYY-MM-DD') : null,
+      time: formData.time ? formData.time.format('HH:mm') : null,
       price: parseFloat(formData.price) || 0,
       maxParticipants: parseInt(formData.maxParticipants),
       currentParticipants: 0,
       status: 'upcoming'
-    });
+    };
 
-    setSuccess(true);
-    setTimeout(() => {
-      navigate('/dashboard');
-    }, 2000);
+    try {
+      await apiService.createEvent(eventPayload); // API call
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+    } catch (err) {
+      setErrors({ api: err.message || 'Failed to create event. Please try again.' });
+      console.error("Failed to create event:", err);
+    } finally {
+      setLoadingSubmit(false);
+    }
   };
 
   const handleCancel = () => {
@@ -203,6 +215,12 @@ const CreateEvent = () => {
         {success && (
           <Alert severity="success" sx={{ mb: 3 }}>
             Event created successfully! Redirecting to dashboard...
+          </Alert>
+        )}
+
+        {errors.api && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {errors.api}
           </Alert>
         )}
 
@@ -437,9 +455,10 @@ const CreateEvent = () => {
                     type="submit"
                     variant="contained"
                     startIcon={<Save />}
+                    disabled={loadingSubmit}
                     size="large"
                   >
-                    Create Event
+                    {loadingSubmit ? 'Creating...' : 'Create Event'}
                   </Button>
                 </Box>
               </Grid>
@@ -452,4 +471,3 @@ const CreateEvent = () => {
 };
 
 export default CreateEvent;
-
