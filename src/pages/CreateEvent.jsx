@@ -24,6 +24,7 @@ import {
   LocationOn,
   AttachMoney,
   People,
+  Image, // Added for image input
   Category,
   Description
 } from '@mui/icons-material';
@@ -46,7 +47,8 @@ const CreateEvent = () => {
     location: '',
     maxParticipants: '',
     price: '',
-    tags: []
+    tags: [],
+    image: '' // Added image field
   });
   const [tagInput, setTagInput] = useState('');
   const [errors, setErrors] = useState({});
@@ -142,6 +144,11 @@ const CreateEvent = () => {
     if (formData.price < 0) newErrors.price = 'Price cannot be negative';
 
     // Check if date is in the future
+    if (!formData.image.trim()) {
+      newErrors.image = 'Image URL is required';
+    } else if (!/^https?:\/\/.+\..+/.test(formData.image.trim())) {
+      newErrors.image = 'Please enter a valid image URL (e.g., http://example.com/image.png)';
+    }
     if (formData.date && formData.date.isBefore(dayjs(), 'day')) {
       newErrors.date = 'Event date must be in the future';
     }
@@ -169,7 +176,8 @@ const CreateEvent = () => {
       price: parseFloat(formData.price) || 0,
       maxParticipants: parseInt(formData.maxParticipants),
       currentParticipants: 0,
-      status: 'upcoming'
+      status: 'upcoming',
+      image: formData.image.trim() // Added image to payload
     };
 
     try {
@@ -321,6 +329,26 @@ const CreateEvent = () => {
                 </Box>
               </Grid>
 
+              {/* Image Link */}
+              <Grid item xs={12}>
+                <Typography variant="h5" gutterBottom fontWeight="bold" sx={{ mt: 2 }}>
+                  Event Image
+                </Typography>
+                <Divider sx={{ mb: 3 }} />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Image URL"
+                  name="image"
+                  value={formData.image}
+                  onChange={handleChange}
+                  error={!!errors.image}
+                  helperText={errors.image || "Link to your event's promotional image"}
+                  required
+                  InputProps={{ startAdornment: (<InputAdornment position="start"><Image /></InputAdornment>)}}
+                />
+              </Grid>
               {/* Date & Time */}
               <Grid item xs={12}>
                 <Typography variant="h5" gutterBottom fontWeight="bold" sx={{ mt: 2 }}>
