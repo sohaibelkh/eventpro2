@@ -152,7 +152,7 @@ const OrganizerDashboard = () => {
               <Button
                 variant="contained"
                 startIcon={<Add />}
-                href="/create-event"
+                href="/events/create"
                 size="large"
               >
                 Create New Event
@@ -385,4 +385,3 @@ const OrganizerDashboard = () => {
 };
 
 export default OrganizerDashboard;
-

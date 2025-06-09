@@ -147,6 +147,7 @@ const EventDetail = () => {
   const isEventFull = event.currentParticipants >= event.maxParticipants;
   const isEventPast = event.status === 'past';
 
+  const isOrganizer = user?.role === 'organizer';
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Back Button */}
@@ -275,45 +276,43 @@ const EventDetail = () => {
               {event.price === 0 ? 'Free Event' : `$${event.price}`}
             </Typography>
 
-            {userIsRegistered ? (
-              <Alert severity="success" sx={{ mb: 2 }}>
-                You are registered for this event!
-              </Alert>
-            ) : isEventPast ? (
-              <Alert severity="info" sx={{ mb: 2 }}>
-                This event has already ended.
-              </Alert>
-            ) : isEventFull ? (
-              <Alert severity="warning" sx={{ mb: 2 }}>
-                This event is fully booked.
-              </Alert>
-            ) : null}
+            {!isOrganizer && ( // Only show registration button and related alerts if not an organizer
+              <>
+                {userIsRegistered ? (
+                  <Alert severity="success" sx={{ mb: 2 }}>
+                    You are registered for this event!
+                  </Alert>
+                ) : isEventPast ? (
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    This event has already ended.
+                  </Alert>
+                ) : isEventFull ? (
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    This event is fully booked.
+                  </Alert>
+                ) : null}
 
-            <Button
-              variant="contained"
-              fullWidth
-              size="large"
-              onClick={handleRegister}
-              disabled={userIsRegistered || isEventPast || isEventFull}
-              sx={{ mb: 2 }}
-            >
-              {userIsRegistered
-                ? 'Already Registered'
-                : isEventPast
-                ? 'Event Ended'
-                : isEventFull
-                ? 'Event Full'
-                : 'Register Now'}
-            </Button>
-
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button variant="outlined" startIcon={<Share />} size="small" fullWidth>
-                Share
-              </Button>
-              <Button variant="outlined" startIcon={<Bookmark />} size="small" fullWidth>
-                Save
-              </Button>
-            </Box>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  size="large"
+                  onClick={handleRegister}
+                  disabled={userIsRegistered || isEventPast || isEventFull}
+                  sx={{ mb: 2 }}
+                >
+                  {userIsRegistered
+                    ? 'Already Registered'
+                    : isEventPast
+                    ? 'Event Ended'
+                    : isEventFull
+                    ? 'Event Full'
+                    : 'Register Now'}
+                </Button>
+              </>
+            )}
+            {isOrganizer && ( // Optional: Show a message to organizers
+                 <Alert severity="info" sx={{ mb: 2 }}>Organizers manage events, not register for them here.</Alert>
+            )}
           </Paper>
         </Grid>
       </Grid>
