@@ -113,6 +113,27 @@ class ApiService {
       method: 'DELETE',
     });
   }
+// ...
+  async getAllUsers() {
+    return await this.request('/admin/users'); // Or your actual admin endpoint for users
+  }
+
+
+  async updateUserRole(userId, role) {
+    return await this.request(`/admin/users/${userId}/role`, {
+      method: 'PATCH', // Or PUT, depending on your API
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  async deleteUserByAdmin(userId) {
+    return await this.request(`/admin/users/${userId}`, {
+      method: 'DELETE',
+    });
+  }
+
+// ...
+
 
   // Event subscriptions
   async subscribeToEvent(eventId) {
@@ -192,4 +213,3 @@ export const getEventParticipants = async (eventId) => {
 };
 
 export default apiService;
-
