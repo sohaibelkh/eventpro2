@@ -75,12 +75,6 @@ const Navigation = () => {
           { text: 'Create Event', icon: <Add />, path: '/events/create', roles: ['organizer', 'admin'] }
         );
       }
-
-      // if (user.role === 'admin') {
-      //   items.push(
-      //     { text: 'Admin Panel', icon: <AdminPanelSettings />, path: '/admin', roles: ['admin'] }
-      //   );
-      // }
     }
 
     return items.filter(item => 

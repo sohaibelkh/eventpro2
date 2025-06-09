@@ -12,12 +12,14 @@ import {
 } from '@mui/material';
 import { Event, TrendingUp, People, Star } from '@mui/icons-material';
 import EventCard from '../components/events/EventCard';
+import { useAuth } from '../hooks/useAuth'; // Import useAuth
 import { getUpcomingEvents, getPastEvents } from '../utils/apiService';
 
 const Home = () => {
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [pastEvents, setPastEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth(); // Get user from useAuth
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -91,22 +93,24 @@ const Home = () => {
             >
               Browse Events
             </Button>
-            <Button
-              variant="outlined"
-              size="large"
-              component={Link}
-              to="/signup"
-              sx={{
-                borderColor: 'white',
-                color: 'white',
-                '&:hover': {
+            {!user && ( // Conditionally render "Join EventPro" button
+              <Button
+                variant="outlined"
+                size="large"
+                component={Link}
+                to="/signup"
+                sx={{
                   borderColor: 'white',
-                  backgroundColor: 'rgba(255,255,255,0.1)'
-                }
-              }}
-            >
-              Join EventPro
-            </Button>
+                  color: 'white',
+                  '&:hover': {
+                    borderColor: 'white',
+                    backgroundColor: 'rgba(255,255,255,0.1)'
+                  }
+                }}
+              >
+                Join EventPro
+              </Button>
+            )}
           </Box>
         </Container>
       </Box>
@@ -260,4 +264,3 @@ const Home = () => {
 };
 
 export default Home;
-
